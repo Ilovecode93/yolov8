@@ -100,7 +100,7 @@ class Annotator:
         self.limb_color = colors.pose_palette[[9, 9, 9, 9, 7, 7, 7, 0, 0, 0, 0, 0, 16, 16, 16, 16, 16, 16, 16]]
         self.kpt_color = colors.pose_palette[[16, 16, 16, 16, 16, 0, 0, 0, 0, 0, 0, 9, 9, 9, 9, 9, 9]]
 
-    def box_label(self, box, label='', color=(128, 128, 128), txt_color=(255, 255, 255)):
+    def box_label(self, box, label='', color=(128, 128, 128), txt_color=(255, 255, 255), count_number = 0):
         """Add one xyxy box to image with label."""
         if isinstance(box, torch.Tensor):
             box = box.tolist()
@@ -118,19 +118,22 @@ class Annotator:
                 self.draw.text((box[0], box[1] - h if outside else box[1]), label, fill=txt_color, font=self.font)
         else:  # cv2
             p1, p2 = (int(box[0]), int(box[1])), (int(box[2]), int(box[3]))
-            cv2.rectangle(self.im, p1, p2, color, thickness=self.lw, lineType=cv2.LINE_AA)
+            #cv2.rectangle(self.im, p1, p2, color, thickness=self.lw, lineType=cv2.LINE_AA)
+            # cv2.rectangle(self.im, p1, p2, color, thickness=1, lineType=cv2.LINE_AA)
+            cor1x =  int(int(box[0]) + (int(box[2]) - int(box[0])) / 2)
+            cor1y =  int(int(box[1]) + (int(box[3]) - int(box[1])) / 2)
+            cv2.putText(self.im, str(count_number), (cor1x , cor1y), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 0, 0), 1)
             if label:
-                w, h = cv2.getTextSize(label, 0, fontScale=self.sf, thickness=self.tf)[0]  # text width, height
+                tf = max(self.lw - 1, 1)  # font thickness
+                w, h = cv2.getTextSize(label, 0, fontScale=self.lw / 3, thickness=tf)[0]  # text width, height
                 outside = p1[1] - h >= 3
-                p2 = p1[0] + w, p1[1] - h - 3 if outside else p1[1] + h + 3
-                cv2.rectangle(self.im, p1, p2, color, -1, cv2.LINE_AA)  # filled
-                cv2.putText(self.im,
-                            label, (p1[0], p1[1] - 2 if outside else p1[1] + h + 2),
-                            0,
-                            self.sf,
-                            txt_color,
-                            thickness=self.tf,
-                            lineType=cv2.LINE_AA)
+                # cv2.putText(self.im,
+                #             str(count_number), (p1[0], p1[1] - 2 if outside else p1[1] + h + 2),
+                #             0,
+                #             self.lw / 3,
+                #             (255, 0, 0),
+                #             thickness=tf,
+                #             lineType=cv2.LINE_AA)
 
     def masks(self, masks, colors, im_gpu, alpha=0.5, retina_masks=False):
         """

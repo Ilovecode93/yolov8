@@ -226,15 +226,21 @@ class Results(SimpleClass):
                 im_gpu = torch.as_tensor(img, dtype=torch.float16, device=pred_masks.data.device).permute(
                     2, 0, 1).flip(0).contiguous() / 255
             idx = pred_boxes.cls if pred_boxes else range(len(pred_masks))
-            annotator.masks(pred_masks.data, colors=[colors(x, True) for x in idx], im_gpu=im_gpu)
+            tmp_len = len(pred_boxes.cls)
+            import numpy as np
+            arr = np.arange(tmp_len)
+            tensor1 = torch.from_numpy(arr)
+            annotator.masks(pred_masks.data, colors=[colors(x, True) for x in tensor1], im_gpu=im_gpu)
+
 
         # Plot Detect results
         if pred_boxes and show_boxes:
-            for d in reversed(pred_boxes):
+            for count_number, d in enumerate(reversed(pred_boxes)):
+                count_number += 1
                 c, conf, id = int(d.cls), float(d.conf) if conf else None, None if d.id is None else int(d.id.item())
                 name = ('' if id is None else f'id:{id} ') + names[c]
                 label = (f'{name} {conf:.2f}' if conf else name) if labels else None
-                annotator.box_label(d.xyxy.squeeze(), label, color=colors(c, True))
+                annotator.box_label(d.xyxy.squeeze(), label, color=colors(c, True), count_number = count_number)
 
         # Plot Classify results
         if pred_probs is not None and show_probs:
