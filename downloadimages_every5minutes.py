@@ -19,8 +19,6 @@ import shutil
 import os
 from datetime import datetime
   
-
-
 def pigcount(img, area):
     
     #model = YOLO('/home/deepl/ultralytics/runs/segment/train7/weights/best.pt')  # load a custom model

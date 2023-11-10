@@ -4,7 +4,7 @@ from ultralytics.engine.results import Results
 from ultralytics.models.yolo.detect.predict import DetectionPredictor
 from ultralytics.utils import DEFAULT_CFG, ops
 
-
+# only be run when predict a image not in the train or val process.
 class SegmentationPredictor(DetectionPredictor):
     """
     A class extending the DetectionPredictor class for prediction based on a segmentation model.
@@ -32,7 +32,7 @@ class SegmentationPredictor(DetectionPredictor):
                                     max_det=self.args.max_det,
                                     nc=len(self.model.names),
                                     classes=self.args.classes)
-
+        print("#"*20, "Predict")
         if not isinstance(orig_imgs, list):  # input images are a torch.Tensor, not a list
             orig_imgs = ops.convert_torch2numpy_batch(orig_imgs)
 

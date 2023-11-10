@@ -58,6 +58,7 @@ class SegmentationValidator(DetectionValidator):
                                          'R', 'mAP50', 'mAP50-95)')
 
     def postprocess(self, preds):
+        #print("*"*10, "Validate", "*" * 10)
         """Post-processes YOLO predictions and returns output detections with proto."""
         p = ops.non_max_suppression(preds[0],
                                     self.args.conf,

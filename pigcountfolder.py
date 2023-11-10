@@ -10,7 +10,7 @@ def pigcount(img, area):
     #model = YOLO('/home/deepl/ultralytics/checkpoint/train0002/weights/best.pt')
     #model = YOLO('/home/deepl/ultralytics/521_checkpoint/train0006/weights/best.pt')
     #model = YOLO('/home/deepl/ultralytics_926revise/checkpoint/82/weights/best.pt')
-    model = YOLO('/home/deepl/ultralytics/smallpig_weights/1017/weights/best.pt')
+    model = YOLO('/home/deepl/usedlocated_ultralytics/smallpig_weights/1106/weights/best.pt')
     #model = YOLO('/home/deepl/ultralytics/1009.pt')
     #mask = np.zeros_like(img[:, :, 0])
     new_mask = np.zeros_like(img[:, :, 0])
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         tmp_frame = cv2.imread(full_path)
         img, pig_count, masked_img = pigcount(tmp_frame, pts)    
         print("pig_count: ", pig_count)
-        if pig_count != 27:
+        if pig_count !=23:
             cv2.imwrite("{}/{}_result.{}".format(prefix, i.split(".")[0], i.split(".")[1]), img)
             #cv2.imwrite("output/{}".format(i), masked_img)
             shutil.copy(full_path, "{}/{}".format(prefix, i))
