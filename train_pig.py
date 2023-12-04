@@ -8,4 +8,4 @@ from ultralytics import YOLO
 model = YOLO('/home/deepl/ultralytics_926revise/checkpoint/82/weights/82best.pt')
 # model = YOLO('checkpoint/520/best.pt')
 # Train the model
-model.train(data='smallpig.yaml', epochs=10, imgsz=1024, patience= 500, batch=4, cache = True)
+model.train(data='smallpig.yaml', epochs=1, imgsz=1024, patience= 500, batch=2, cache = True)

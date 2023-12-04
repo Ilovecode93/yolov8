@@ -183,6 +183,7 @@ class Mosaic(BaseMixTransform):
 
     def _mosaic9(self, labels):
         """Create a 3x3 image mosaic."""
+        print("----- Creating 3x3 mosaic -----")
         mosaic_labels = []
         s = self.imgsz
         hp, wp = -1, -1  # height, width previous
@@ -601,6 +602,7 @@ class LetterBox:
 class CopyPaste:
 
     def __init__(self, p=0.5) -> None:
+        print("------------- Copy Paste augmentation -------------")
         self.p = p
 
     def __call__(self, labels):
@@ -612,6 +614,7 @@ class CopyPaste:
         instances.convert_bbox(format='xyxy')
         instances.denormalize(w, h)
         if self.p and len(instances.segments):
+            print("--------copy paste-----------")
             n = len(instances)
             _, w, _ = im.shape  # height, width, channels
             im_new = np.zeros(im.shape, np.uint8)
@@ -662,7 +665,6 @@ class Albumentations:
                 A.RandomGamma(p=0.0),
                 A.ImageCompression(quality_lower=75, p=0.0)]  # transforms
             self.transform = A.Compose(T, bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels']))
-
             LOGGER.info(prefix + ', '.join(f'{x}'.replace('always_apply=False, ', '') for x in T if x.p))
         except ImportError:  # package not installed, skip
             pass

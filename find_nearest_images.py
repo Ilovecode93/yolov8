@@ -11,13 +11,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import matplotlib.gridspec as gridspec
 
-# def pigcount(model, img, area):
-#     mask = np.zeros_like(img[:, :, 0])
-#     cv2.fillPoly(mask, [area], 255)
-#     masked_img = cv2.bitwise_and(img, img, mask=mask)
-#     results = model(masked_img)  # predict on an image
-#     res_plotted = results[0].plot()
-#     return res_plotted, len(results[0].boxes), masked_img
 def pigcount(img, area):
     
     #model = YOLO('/home/deepl/ultralytics/runs/segment/train7/weights/best.pt')  # load a custom model
@@ -25,7 +18,7 @@ def pigcount(img, area):
     #model = YOLO('/home/deepl/ultralytics/smallpig_weights/1017/weights/best.pt')
     #model = YOLO('/home/deepl/ultralytics_926revise/checkpoint/82/weights/best.pt')
     #model = YOLO('/home/deepl/ultralytics/1011weights/weights/best.pt')
-    model = YOLO('/home/deepl/usedlocated_ultralytics/smallpig_weights/1106/weights/best.pt')
+    model = YOLO('/home/deepl/usedlocated_ultralytics/smallpig_weights/1128/weights/best.pt')
     #model = YOLO('/home/deepl/usedlocated_ultralytics/smallpig_weights/1018_6:30/weights/best.pt')
     new_mask = np.zeros_like(img[:, :, 0])
     cv2.fillPoly(new_mask, [area], 255)

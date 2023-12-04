@@ -1,0 +1,23 @@
+path: /media/deepl/8206e4e5-7eb6-48c5-969a-e61fbc5adff7/SmallPig/already_labeled/labels/YOLODataset_seg
+train: images/train
+val: images/val
+names:
+  0: pig
+
+augmentations:
+- Albumentations:
+    blur_limit: 7
+    brightness_contrast: 
+      brightness_limit: 0.3
+      contrast_limit: 0.3
+    crop:
+      height: 1024
+      width: 1024
+    gauss_noise:
+      var_limit: (10.0, 50.0)
+    horizontal_flip: true
+    hue_saturation:
+      hue_shift_limit: 20
+      sat_shift_limit: 50
+    motion_blur:
+      blur_limit: 7

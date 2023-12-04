@@ -4,13 +4,13 @@ import numpy as np
 from tqdm import tqdm
 import shutil
 
-def pigcount(img, area):
+def pigcount(model_path, img, area):
     
     #model = YOLO('/home/deepl/ultralytics/runs/segment/train7/weights/best.pt')  # load a custom model
     #model = YOLO('/home/deepl/ultralytics/checkpoint/train0002/weights/best.pt')
     #model = YOLO('/home/deepl/ultralytics/521_checkpoint/train0006/weights/best.pt')
     #model = YOLO('/home/deepl/ultralytics_926revise/checkpoint/82/weights/best.pt')
-    model = YOLO('/home/deepl/usedlocated_ultralytics/smallpig_weights/1106/weights/best.pt')
+    model = YOLO(model_path)
     #model = YOLO('/home/deepl/ultralytics/1009.pt')
     #mask = np.zeros_like(img[:, :, 0])
     new_mask = np.zeros_like(img[:, :, 0])
@@ -40,23 +40,23 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description='Process a folder.')
     parser.add_argument('--input_folder', help='Path to the video file.')
+    model_path = '/home/deepl/usedlocated_ultralytics/smallpig_weights/1127/weights/best.pt'
     args = parser.parse_args()
-    prefix = os.path.splitext(os.path.basename(args.input_folder))[0]+"_imageoutput"
-    print(prefix)
+    mid_name = model_path.split("/")[-3]
+    prefix = os.path.splitext(os.path.basename(args.input_folder))[0]+"_resultoutput_{}".format(mid_name)
     if not os.path.exists(prefix):
         os.makedirs(prefix)
     pts = np.array([(535, 494), (532, 777), (573, 1005), (662, 1272), 
                     (721, 1392), (826, 1553), (1005, 1539), (1164, 1498), (1288, 1443),(1364, 1400),
                     (1373, 1226),(1377, 1011),(1333,806),(1297, 707),(1219,544),(1169,461),(1091,364),(802,395)], np.int32)
-    print(args.input_folder)
+    print("input_folder: ", args.input_folder)
     for i in tqdm(os.listdir(args.input_folder)):
         full_path = os.path.join(args.input_folder, i)
         tmp_frame = cv2.imread(full_path)
-        img, pig_count, masked_img = pigcount(tmp_frame, pts)    
+        img, pig_count, masked_img = pigcount(model_path, tmp_frame, pts)   
         print("pig_count: ", pig_count)
-        if pig_count !=23:
+        if pig_count != 0:
             cv2.imwrite("{}/{}_result.{}".format(prefix, i.split(".")[0], i.split(".")[1]), img)
-            #cv2.imwrite("output/{}".format(i), masked_img)
             shutil.copy(full_path, "{}/{}".format(prefix, i))
             
             
