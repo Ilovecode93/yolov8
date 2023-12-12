@@ -20,7 +20,11 @@ from ultralytics.utils.downloads import attempt_download_asset, is_url
 
 
 def check_class_names(names):
-    """Check class names. Map imagenet class codes to human-readable names if required. Convert lists to dicts."""
+    """
+    Check class names.
+
+    Map imagenet class codes to human-readable names if required. Convert lists to dicts.
+    """
     if isinstance(names, list):  # names is a list
         names = dict(enumerate(names))  # convert to dict
     if isinstance(names, dict):
@@ -36,7 +40,41 @@ def check_class_names(names):
     return names
 
 
+def default_class_names(data=None):
+    """Applies default class names to an input YAML file or returns numerical class names."""
+    if data:
+        with contextlib.suppress(Exception):
+            return yaml_load(check_yaml(data))['names']
+    return {i: f'class{i}' for i in range(999)}  # return default if above errors
+
+
 class AutoBackend(nn.Module):
+    """
+    Handles dynamic backend selection for running inference using Ultralytics YOLO models.
+
+    The AutoBackend class is designed to provide an abstraction layer for various inference engines. It supports a wide
+    range of formats, each with specific naming conventions as outlined below:
+
+        Supported Formats and Naming Conventions:
+            | Format                | File Suffix      |
+            |-----------------------|------------------|
+            | PyTorch               | *.pt             |
+            | TorchScript           | *.torchscript    |
+            | ONNX Runtime          | *.onnx           |
+            | ONNX OpenCV DNN       | *.onnx (dnn=True)|
+            | OpenVINO              | *openvino_model/ |
+            | CoreML                | *.mlpackage      |
+            | TensorRT              | *.engine         |
+            | TensorFlow SavedModel | *_saved_model    |
+            | TensorFlow GraphDef   | *.pb             |
+            | TensorFlow Lite       | *.tflite         |
+            | TensorFlow Edge TPU   | *_edgetpu.tflite |
+            | PaddlePaddle          | *_paddle_model   |
+            | ncnn                  | *_ncnn_model     |
+
+    This class offers dynamic backend switching capabilities based on the input model format, making it easier to deploy
+    models across various platforms.
+    """
 
     @torch.no_grad()
     def __init__(self,
@@ -48,33 +86,16 @@ class AutoBackend(nn.Module):
                  fuse=True,
                  verbose=True):
         """
-        MultiBackend class for python inference on various platforms using Ultralytics YOLO.
+        Initialize the AutoBackend for inference.
 
         Args:
-            weights (str): The path to the weights file. Default: 'yolov8n.pt'
-            device (torch.device): The device to run the model on.
-            dnn (bool): Use OpenCV DNN module for inference if True, defaults to False.
-            data (str | Path | optional): Additional data.yaml file for class names.
-            fp16 (bool): If True, use half precision. Default: False
-            fuse (bool): Whether to fuse the model or not. Default: True
-            verbose (bool): Whether to run in verbose mode or not. Default: True
-
-        Supported formats and their naming conventions:
-            | Format                | Suffix           |
-            |-----------------------|------------------|
-            | PyTorch               | *.pt             |
-            | TorchScript           | *.torchscript    |
-            | ONNX Runtime          | *.onnx           |
-            | ONNX OpenCV DNN       | *.onnx dnn=True  |
-            | OpenVINO              | *.xml            |
-            | CoreML                | *.mlpackage      |
-            | TensorRT              | *.engine         |
-            | TensorFlow SavedModel | *_saved_model    |
-            | TensorFlow GraphDef   | *.pb             |
-            | TensorFlow Lite       | *.tflite         |
-            | TensorFlow Edge TPU   | *_edgetpu.tflite |
-            | PaddlePaddle          | *_paddle_model   |
-            | ncnn                  | *_ncnn_model     |
+            weights (str): Path to the model weights file. Defaults to 'yolov8n.pt'.
+            device (torch.device): Device to run the model on. Defaults to CPU.
+            dnn (bool): Use OpenCV DNN module for ONNX inference. Defaults to False.
+            data (str | Path | optional): Path to the additional data.yaml file containing class names. Optional.
+            fp16 (bool): Enable half-precision inference. Supported only on specific backends. Defaults to False.
+            fuse (bool): Fuse Conv2D + BatchNorm layers for optimization. Defaults to True.
+            verbose (bool): Enable verbose logging. Defaults to True.
         """
         super().__init__()
         w = str(weights[0] if isinstance(weights, list) else weights)
@@ -88,7 +109,7 @@ class AutoBackend(nn.Module):
 
         # Set device
         cuda = torch.cuda.is_available() and device.type != 'cpu'  # use CUDA
-        if cuda and not any([nn_module, pt, jit, engine]):  # GPU dataloader formats
+        if cuda and not any([nn_module, pt, jit, engine, onnx]):  # GPU dataloader formats
             device = torch.device('cpu')
             cuda = False
 
@@ -302,7 +323,7 @@ class AutoBackend(nn.Module):
 
         # Check names
         if 'names' not in locals():  # names missing
-            names = self._apply_default_class_names(data)
+            names = default_class_names(data)
         names = check_class_names(names)
 
         # Disable gradients
@@ -440,14 +461,14 @@ class AutoBackend(nn.Module):
 
     def from_numpy(self, x):
         """
-         Convert a numpy array to a tensor.
+        Convert a numpy array to a tensor.
 
-         Args:
-             x (np.ndarray): The array to be converted.
+        Args:
+            x (np.ndarray): The array to be converted.
 
-         Returns:
-             (torch.Tensor): The converted tensor
-         """
+        Returns:
+            (torch.Tensor): The converted tensor
+        """
         return torch.tensor(x).to(self.device) if isinstance(x, np.ndarray) else x
 
     def warmup(self, imgsz=(1, 3, 640, 640)):
@@ -463,20 +484,13 @@ class AutoBackend(nn.Module):
         warmup_types = self.pt, self.jit, self.onnx, self.engine, self.saved_model, self.pb, self.triton, self.nn_module
         if any(warmup_types) and (self.device.type != 'cpu' or self.triton):
             im = torch.empty(*imgsz, dtype=torch.half if self.fp16 else torch.float, device=self.device)  # input
-            for _ in range(2 if self.jit else 1):  #
+            for _ in range(2 if self.jit else 1):
                 self.forward(im)  # warmup
-
-    @staticmethod
-    def _apply_default_class_names(data):
-        """Applies default class names to an input YAML file or returns numerical class names."""
-        with contextlib.suppress(Exception):
-            return yaml_load(check_yaml(data))['names']
-        return {i: f'class{i}' for i in range(999)}  # return default if above errors
 
     @staticmethod
     def _model_type(p='path/to/model.pt'):
         """
-        This function takes a path to a model file and returns the model type
+        This function takes a path to a model file and returns the model type.
 
         Args:
             p: path to the model file. Defaults to path/to/model.pt
@@ -496,6 +510,6 @@ class AutoBackend(nn.Module):
         else:
             from urllib.parse import urlsplit
             url = urlsplit(p)
-            triton = url.netloc and url.path and url.scheme in {'http', 'grfc'}
+            triton = url.netloc and url.path and url.scheme in {'http', 'grpc'}
 
         return types + [triton]
